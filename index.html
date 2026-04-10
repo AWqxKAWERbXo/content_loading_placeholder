@@ -87,6 +87,7 @@
   </p>
 
   <div
+    data-clp
     data-duration="4"
     data-start-event="onload"
     data-headline="Ergebnis wird vorbereitet …"
@@ -113,6 +114,7 @@
   </p>
 
   <div
+    data-clp
     data-duration="3"
     data-start-event="onload"
     data-headline="Durchsuche das Internet"
@@ -135,6 +137,7 @@
   </p>
 
   <div
+    data-clp
     data-duration="5"
     data-start-event="viewport"
     data-headline="Analyse läuft …"
@@ -159,11 +162,14 @@
     Inhalt wird von einer externen URL abgerufen. Die Ausgabe erfolgt erst, wenn
     <em>sowohl</em> die Mindestdauer (<strong>4 s</strong>) <em>als auch</em>
     der HTTP-Abruf abgeschlossen sind.
-    (Hier: <code>https://jsonplaceholder.typicode.com/todos/1</code> – der
-    JSON-Text wird als HTML-Text dargestellt.)
+    (Hier: <code>https://jsonplaceholder.typicode.com/todos/1</code> – die
+    Antwort wird standardmäßig als <strong>Plain Text</strong> dargestellt,
+    um XSS zu verhindern. Mit <code>data-content-trusted="true"</code> kann
+    HTML-Injektion für vollständig vertrauenswürdige Quellen aktiviert werden.)
   </p>
 
   <div
+    data-clp
     data-duration="4"
     data-start-event="viewport"
     data-headline="Lade externe Daten …"
@@ -182,6 +188,7 @@
   </p>
 
   <div
+    data-clp
     data-duration="2"
     data-start-event="viewport"
     data-headline="Schnelle Suche"

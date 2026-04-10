@@ -8,9 +8,14 @@
  *   data-headline="..."        – headline text shown during loading
  *   data-placeholder="a|b|c|"  – pipe-separated texts cycled during loading
  *   data-content-url="https://..." – URL to fetch real content from
+ *   data-content-trusted="true"  – allow fetched content to be injected as HTML
+ *                                  (default: fetched content is rendered as plain text)
  *   data-start-event="onload"  – start on window load (default: "viewport")
  *   data-start-event="viewport"– start when element enters the viewport
  *                                (≥100 px or ≥25 % of element height visible)
+ *
+ * Auto-initialisation targets elements with the [data-clp] attribute to avoid
+ * colliding with other libraries that may also use [data-duration].
  *
  * When no data-content-url is given but the element already has HTML content,
  * that content is cached, replaced with the placeholder, and restored after
@@ -18,6 +23,8 @@
  *
  * When data-content-url is given the content is fetched in the background but
  * only revealed once BOTH the minimum duration AND the fetch have completed.
+ * By default the response text is treated as plain text. Set data-content-trusted="true"
+ * only when the URL is fully trusted and the response is known-safe HTML.
  */
 (function (global) {
   'use strict';
@@ -37,8 +44,9 @@
     this.duration     = Math.max(0, durationSeconds) * 1000;
     this.headline     = el.getAttribute('data-headline') || '';
     this.placeholders = parsePipeSeparated(el.getAttribute('data-placeholder') || '');
-    this.contentUrl   = (el.getAttribute('data-content-url') || '').trim();
-    this.startEvent   = (el.getAttribute('data-start-event') || 'viewport').toLowerCase();
+    this.contentUrl      = (el.getAttribute('data-content-url') || '').trim();
+    this.contentTrusted  = el.getAttribute('data-content-trusted') === 'true';
+    this.startEvent      = (el.getAttribute('data-start-event') || 'viewport').toLowerCase();
 
     /* internal state */
     this._started       = false;
@@ -180,11 +188,17 @@
   };
 
   /* ────────────────────────────────────────────────────────────────
-   * Fetch remote content – stores result as a Promise<string>
+   * Fetch remote content – stores result as a Promise<{content,asHtml}>
+   *
+   * By default the response body is treated as plain text to prevent XSS.
+   * Set data-content-trusted="true" on the element to allow HTML injection
+   * (only for URLs you fully control and whose output is known-safe).
    * ──────────────────────────────────────────────────────────────── */
   ContentLoadingPlaceholder.prototype._fetch = function () {
     var url        = this.contentUrl;
-    var errHtml    = '<p class="clp-error-text">Inhalt konnte nicht geladen werden.</p>';
+    var asTrusted  = this.contentTrusted;
+    /* Error markup is internally generated so it is always safe to inject. */
+    var errResult  = { content: '<p class="clp-error-text">Inhalt konnte nicht geladen werden.</p>', asHtml: true };
 
     if (typeof fetch === 'function') {
       this._fetchPromise = fetch(url)
@@ -192,16 +206,21 @@
           if (!res.ok) throw new Error('HTTP ' + res.status);
           return res.text();
         })
-        .catch(function () { return errHtml; });
+        .then(function (text) { return { content: text, asHtml: asTrusted }; })
+        .catch(function () { return errResult; });
     } else {
       /* XHR fallback wrapped in a Promise */
       this._fetchPromise = new Promise(function (resolve) {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
         xhr.onload = function () {
-          resolve(xhr.status >= 200 && xhr.status < 400 ? xhr.responseText : errHtml);
+          if (xhr.status >= 200 && xhr.status < 400) {
+            resolve({ content: xhr.responseText, asHtml: asTrusted });
+          } else {
+            resolve(errResult);
+          }
         };
-        xhr.onerror = function () { resolve(errHtml); };
+        xhr.onerror = function () { resolve(errResult); };
         xhr.send();
       });
     }
@@ -284,18 +303,19 @@
 
     if (this.contentUrl) {
       /* Wait for the fetch Promise to settle, then reveal */
-      this._fetchPromise.then(function (html) {
-        self._reveal(html);
+      this._fetchPromise.then(function (result) {
+        self._reveal(result.content, result.asHtml);
       });
     } else {
-      this._reveal(this._cachedContent !== null ? this._cachedContent : '');
+      /* Cached content came from the page's own DOM – safe to inject as HTML */
+      this._reveal(this._cachedContent !== null ? this._cachedContent : '', true);
     }
   };
 
   /* ────────────────────────────────────────────────────────────────
    * Fade out placeholder, inject content, fade content in
    * ──────────────────────────────────────────────────────────────── */
-  ContentLoadingPlaceholder.prototype._reveal = function (html) {
+  ContentLoadingPlaceholder.prototype._reveal = function (content, asHtml) {
     var self = this;
     var el   = this.el;
 
@@ -310,7 +330,11 @@
 
     setTimeout(function () {
       el.classList.remove('clp-container', 'clp-hiding');
-      el.innerHTML = html;
+      if (asHtml) {
+        el.innerHTML = content;
+      } else {
+        el.textContent = content;
+      }
       el.classList.add('clp-content-reveal');
 
       /* Clean up reveal class after animation */
@@ -331,10 +355,12 @@
   }
 
   /* ────────────────────────────────────────────────────────────────
-   * Auto-initialise all matching elements on DOMContentLoaded
+   * Auto-initialise elements that carry the [data-clp] opt-in marker.
+   * Using a dedicated attribute avoids clashing with other libraries
+   * that may also use [data-duration] on arbitrary elements.
    * ──────────────────────────────────────────────────────────────── */
   function autoInit() {
-    var els = document.querySelectorAll('[data-duration]');
+    var els = document.querySelectorAll('[data-clp]');
     for (var i = 0; i < els.length; i++) {
       new ContentLoadingPlaceholder(els[i]);
     }
