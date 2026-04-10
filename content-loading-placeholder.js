@@ -80,6 +80,12 @@
     el.innerHTML = '';
     el.classList.add('clp-container');
 
+    /* Accessibility: signal that the element is busy loading content */
+    el.setAttribute('aria-busy', 'true');
+    if (this.headline) {
+      el.setAttribute('aria-label', this.headline);
+    }
+
     /* Progress bar */
     var progressWrap = document.createElement('div');
     progressWrap.className = 'clp-progress-container';
@@ -96,10 +102,13 @@
       el.appendChild(h);
     }
 
-    /* Placeholder text */
+    /* Placeholder text – live region so screen readers announce cycling text */
     if (this.placeholders.length > 0) {
       this._textEl = document.createElement('p');
       this._textEl.className = 'clp-placeholder-text';
+      this._textEl.setAttribute('role', 'status');
+      this._textEl.setAttribute('aria-live', 'polite');
+      this._textEl.setAttribute('aria-atomic', 'true');
       this._textEl.textContent = this.placeholders[0];
       el.appendChild(this._textEl);
     }
@@ -175,6 +184,10 @@
     if (this._started) return;
     this._started   = true;
     this._startTime = Date.now();
+
+    /* Resume animations that are paused by default (prevents them running
+     * before the viewport trigger fires in data-start-event="viewport" mode) */
+    this.el.classList.add('clp-active');
 
     if (this.contentUrl) {
       this._fetch();
@@ -329,7 +342,9 @@
     el.classList.add('clp-hiding');
 
     setTimeout(function () {
-      el.classList.remove('clp-container', 'clp-hiding');
+      /* Signal that loading is complete before clearing the container */
+      el.setAttribute('aria-busy', 'false');
+      el.classList.remove('clp-container', 'clp-active', 'clp-hiding');
       if (asHtml) {
         el.innerHTML = content;
       } else {
