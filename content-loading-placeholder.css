@@ -1,0 +1,196 @@
+/* ============================================================
+   content-loading-placeholder.css
+   Styles for the content loading placeholder component
+   ============================================================ */
+
+/* ── Container ─────────────────────────────────────────────── */
+.clp-container {
+  position: relative;
+  padding: 2rem 1.5rem;
+  background: #f4f6f9;
+  border-radius: 10px;
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* ── Progress bar wrapper ───────────────────────────────────── */
+.clp-progress-container {
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+}
+
+/* ── Animated, glowing progress bar ────────────────────────── */
+.clp-progress-bar {
+  height: 100%;
+  width: 0%;
+  border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    #00d4ff,
+    #00ff88,
+    #b400ff,
+    #ff2d6b,
+    #ff8c00,
+    #00d4ff
+  );
+  background-size: 400% 100%;
+  /* Paused by default – activated by .clp-active when _start() fires.
+   * This prevents the animation running before the element enters the
+   * viewport in data-start-event="viewport" mode. */
+  animation: clp-shift 3s linear infinite, clp-glow 3s ease-in-out infinite;
+  animation-play-state: paused, paused;
+  will-change: width, background-position, box-shadow;
+}
+
+/* Resume animations once _start() has added .clp-active */
+.clp-active .clp-progress-bar {
+  animation-play-state: running, running;
+}
+
+@keyframes clp-shift {
+  0%   { background-position: 0%   50%; }
+  100% { background-position: 400% 50%; }
+}
+
+@keyframes clp-glow {
+  0%,  100% { box-shadow: 0 0 8px  4px rgba(0, 212, 255, 0.7); }
+  25%        { box-shadow: 0 0 10px 5px rgba(0, 255, 136, 0.7); }
+  50%        { box-shadow: 0 0 12px 6px rgba(180, 0, 255, 0.7); }
+  75%        { box-shadow: 0 0 10px 5px rgba(255, 45, 107, 0.7); }
+}
+
+/* ── Headline ───────────────────────────────────────────────── */
+.clp-headline {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0 0 0.6rem;
+  line-height: 1.3;
+}
+
+/* ── Cycling placeholder text ───────────────────────────────── */
+.clp-placeholder-text {
+  font-size: 0.9rem;
+  color: #718096;
+  line-height: 1.5;
+  min-height: 1.4em;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  will-change: opacity, transform;
+}
+
+.clp-placeholder-text.clp-text-out {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.clp-placeholder-text.clp-text-in {
+  animation: clp-text-reveal 0.4s ease forwards;
+}
+
+@keyframes clp-text-reveal {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* ── Spinner dots (shown below the text) ───────────────────── */
+.clp-dots {
+  display: flex;
+  gap: 6px;
+  margin-top: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.clp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #a0aec0;
+  /* Paused by default – activated with .clp-active */
+  animation: clp-dot-pulse 1.4s ease-in-out infinite;
+  animation-play-state: paused;
+}
+
+.clp-dot:nth-child(2) { animation-delay: 0.2s; }
+.clp-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Resume dot pulse once _start() has added .clp-active */
+.clp-active .clp-dot {
+  animation-play-state: running;
+}
+
+@keyframes clp-dot-pulse {
+  0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+  40%            { transform: scale(1.1); opacity: 1;   }
+}
+
+/* ── Container fade-out (before content reveal) ─────────────── */
+.clp-hiding {
+  animation: clp-container-out 0.4s ease forwards;
+}
+
+@keyframes clp-container-out {
+  from { opacity: 1; transform: scale(1);    }
+  to   { opacity: 0; transform: scale(0.97); }
+}
+
+/* ── Content reveal (applied to element after placeholder gone) */
+.clp-content-reveal {
+  animation: clp-content-in 0.55s ease forwards;
+}
+
+@keyframes clp-content-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* ── Error state ────────────────────────────────────────────── */
+.clp-error-text {
+  font-size: 0.85rem;
+  color: #e53e3e;
+}
+
+/* ── Reduced-motion: disable decorative animations ──────────── */
+@media (prefers-reduced-motion: reduce) {
+  /* Progress bar: static solid colour, no shift/glow */
+  .clp-progress-bar,
+  .clp-active .clp-progress-bar {
+    animation: none;
+    background: #00d4ff;
+    background-size: 100% 100%;
+  }
+
+  /* Dots: static, no pulse */
+  .clp-dot,
+  .clp-active .clp-dot {
+    animation: none;
+    opacity: 0.7;
+    transform: none;
+  }
+
+  /* Placeholder text: instant swap, no slide */
+  .clp-placeholder-text {
+    transition: none;
+  }
+
+  /* Container fade-out and content reveal: instant */
+  .clp-hiding {
+    animation: none;
+    opacity: 0;
+  }
+
+  .clp-content-reveal {
+    animation: none;
+  }
+}

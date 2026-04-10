@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Content Loading Placeholder – Demo</title>
+  <link rel="stylesheet" href="content-loading-placeholder.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      background: #edf2f7;
+      color: #2d3748;
+      padding: 2rem 1rem;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 0.25rem;
+      font-size: 1.75rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #718096;
+      margin-bottom: 3rem;
+    }
+
+    section {
+      max-width: 680px;
+      margin: 0 auto 3rem;
+    }
+
+    section > h2 {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #4a5568;
+      margin-bottom: 0.5rem;
+    }
+
+    section > p.desc {
+      font-size: 0.85rem;
+      color: #718096;
+      margin: 0 0 0.75rem;
+    }
+
+    /* ── Demos with enough scroll space ── */
+    .spacer {
+      height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #a0aec0;
+      font-size: 1.1rem;
+    }
+
+    /* ── Reveal target styles ── */
+    .revealed-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 14px rgba(0,0,0,.08);
+    }
+
+    .revealed-card h3 { margin-top: 0; }
+  </style>
+</head>
+<body>
+
+<h1>Content Loading Placeholder</h1>
+<p class="subtitle">
+  Demonstriert alle Varianten des <code>data-*</code>-gesteuerten Lade-Placeholders.
+</p>
+
+<!-- ══════════════════════════════════════════════════════════════
+     Demo 1 – onload, cached content (HTML already in the div)
+     ══════════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Demo 1 – <code>data-start-event="onload"</code> · Cached Content</h2>
+  <p class="desc">
+    Der Inhalt war bereits im <code>&lt;div&gt;</code> vorhanden. Er wird zwischengespeichert,
+    der Placeholder gezeigt und nach <strong>4 s</strong> wieder eingefügt.
+    Die Animation startet sofort mit dem Seitenload (<code>onload</code>).
+  </p>
+
+  <div
+    data-clp
+    data-duration="4"
+    data-start-event="onload"
+    data-headline="Ergebnis wird vorbereitet …"
+    data-placeholder="Wir stellen das Ergebnis für Sie zusammen.|Noch einen Augenblick Geduld.|Das Ergebnis wird nochmal überprüft …|"
+  >
+    <div class="revealed-card">
+      <h3>🎉 Ihr Ergebnis ist da!</h3>
+      <p>
+        Dieser Inhalt war ursprünglich im DOM vorhanden, wurde zwischengespeichert
+        und nach Ablauf der Wartezeit wieder eingefügt.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     Demo 2 – onload, no content (empty placeholder, no URL)
+     ══════════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Demo 2 – <code>data-start-event="onload"</code> · Leeres Div</h2>
+  <p class="desc">
+    Kein Ausgangsinhalt und keine URL. Der Placeholder läuft für <strong>3 s</strong>
+    und endet mit leerem Inhalt – nützlich als reine Ladeanzeige.
+  </p>
+
+  <div
+    data-clp
+    data-duration="3"
+    data-start-event="onload"
+    data-headline="Durchsuche das Internet"
+    data-placeholder="Einen Moment bitte …|Gleich fertig …|"
+  ></div>
+</section>
+
+<!-- spacer so the viewport demos require scrolling -->
+<div class="spacer">↓ Scroll nach unten für die Viewport-Demos ↓</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     Demo 3 – viewport, cached content
+     ══════════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Demo 3 – <code>data-start-event="viewport"</code> · Cached Content</h2>
+  <p class="desc">
+    Der Inhalt war im DOM. Die Animation beginnt erst, wenn dieses Element
+    in den Viewport gescrollt wurde (≥ 100 px oder ≥ 25 % der Elementhöhe sichtbar).
+    Dauer: <strong>5 s</strong>.
+  </p>
+
+  <div
+    data-clp
+    data-duration="5"
+    data-start-event="viewport"
+    data-headline="Analyse läuft …"
+    data-placeholder="Daten werden analysiert.|Zusammenfassung wird erstellt.|Qualitätsprüfung läuft …|Fast fertig!|"
+  >
+    <div class="revealed-card">
+      <h3>📊 Analyse abgeschlossen</h3>
+      <p>
+        Dieser Inhalt wurde erst sichtbar, nachdem das Element in den Viewport
+        gescrollt und die Mindestdauer abgelaufen war.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     Demo 4 – viewport, remote URL
+     ══════════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Demo 4 – <code>data-content-url</code> · Remote Content</h2>
+  <p class="desc">
+    Inhalt wird von einer externen URL abgerufen. Die Ausgabe erfolgt erst, wenn
+    <em>sowohl</em> die Mindestdauer (<strong>4 s</strong>) <em>als auch</em>
+    der HTTP-Abruf abgeschlossen sind.
+    (Hier: <code>https://jsonplaceholder.typicode.com/todos/1</code> – die
+    Antwort wird standardmäßig als <strong>Plain Text</strong> dargestellt,
+    um XSS zu verhindern. Mit <code>data-content-trusted="true"</code> kann
+    HTML-Injektion für vollständig vertrauenswürdige Quellen aktiviert werden.)
+  </p>
+
+  <div
+    data-clp
+    data-duration="4"
+    data-start-event="viewport"
+    data-headline="Lade externe Daten …"
+    data-placeholder="Verbindung wird hergestellt …|Daten werden empfangen …|Antwort wird verarbeitet …|"
+    data-content-url="https://jsonplaceholder.typicode.com/todos/1"
+  ></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     Demo 5 – viewport, short duration, single placeholder
+     ══════════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Demo 5 – Kurze Dauer, einzelner Placeholder-Text</h2>
+  <p class="desc">
+    Nur ein einziger Placeholder-Text, Dauer <strong>2 s</strong>, Viewport-Start.
+  </p>
+
+  <div
+    data-clp
+    data-duration="2"
+    data-start-event="viewport"
+    data-headline="Schnelle Suche"
+    data-placeholder="Bitte warten …"
+  >
+    <div class="revealed-card">
+      <h3>✅ Fertig!</h3>
+      <p>Schnell geladen – dieser Inhalt war direkt im DOM vorhanden.</p>
+    </div>
+  </div>
+</section>
+
+<script src="content-loading-placeholder.js"></script>
+</body>
+</html>
