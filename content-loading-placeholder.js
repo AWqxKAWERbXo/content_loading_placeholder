@@ -26,8 +26,15 @@
    * Constructor
    * ──────────────────────────────────────────────────────────────── */
   function ContentLoadingPlaceholder(el) {
+    var durationAttr = el.getAttribute('data-duration');
+    var durationSeconds = parseFloat(durationAttr);
+
+    if (!isFinite(durationSeconds)) {
+      durationSeconds = 3;
+    }
+
     this.el           = el;
-    this.duration     = Math.max(0, parseFloat(el.getAttribute('data-duration') || '3')) * 1000;
+    this.duration     = Math.max(0, durationSeconds) * 1000;
     this.headline     = el.getAttribute('data-headline') || '';
     this.placeholders = parsePipeSeparated(el.getAttribute('data-placeholder') || '');
     this.contentUrl   = (el.getAttribute('data-content-url') || '').trim();
